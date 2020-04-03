@@ -23,6 +23,7 @@ import static org.apache.beam.sdk.io.common.IOITHelper.getHashForRecordCount;
 import com.google.cloud.Timestamp;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
+import com.mongodb.client.model.Filters;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
@@ -161,7 +162,8 @@ public class MongoDBIOIT {
             MongoDbIO.write()
                 .withUri(mongoUrl)
                 .withDatabase(options.getMongoDBDatabaseName())
-                .withCollection(collection));
+                .withCollection(collection)
+                .withFilter(Filters.not(Filters.eq("id", "bonjour"))));
     PipelineResult writeResult = writePipeline.run();
     writeResult.waitUntilFinish();
 

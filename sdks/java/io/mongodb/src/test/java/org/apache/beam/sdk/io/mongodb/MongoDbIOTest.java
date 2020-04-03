@@ -334,7 +334,8 @@ public class MongoDbIOTest {
             MongoDbIO.write()
                 .withUri("mongodb://localhost:" + port)
                 .withDatabase(DATABASE)
-                .withCollection(collectionName));
+                .withCollection(collectionName)
+                .withFilter(Filters.not(Filters.eq("id", "bonjour"))));
 
     pipeline.run();
 
@@ -355,7 +356,8 @@ public class MongoDbIOTest {
                 .withUri("mongodb://localhost:" + port)
                 .withDatabase(DATABASE)
                 .withOrdered(false)
-                .withCollection(collectionName));
+                .withCollection(collectionName)
+                .withFilter(Filters.not(Filters.eq("id", "bonjour"))));
     pipeline.run();
 
     assertEquals(1, countElements(collectionName));
