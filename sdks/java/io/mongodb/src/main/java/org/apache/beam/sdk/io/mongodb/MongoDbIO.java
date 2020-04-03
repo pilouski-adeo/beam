@@ -33,6 +33,8 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.InsertManyOptions;
+import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.Filters.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -783,6 +785,8 @@ public class MongoDbIO {
 
     abstract long batchSize();
 
+    abstract Bson filter();
+
     abstract Builder builder();
 
     @AutoValue.Builder
@@ -804,6 +808,8 @@ public class MongoDbIO {
       abstract Builder setCollection(String collection);
 
       abstract Builder setBatchSize(long batchSize);
+
+      abstract Builder setFilter(Bson filter);
 
       abstract Write build();
     }
@@ -895,6 +901,11 @@ public class MongoDbIO {
       return builder().setBatchSize(batchSize).build();
     }
 
+    public Write withFilter(Bson filter) {
+      checkArgument(filter != null, "filter can not be null");
+      return builder().setFilter(filter).build();
+    }
+
     @Override
     public PDone expand(PCollection<Document> input) {
       checkArgument(uri() != null, "withUri() is required");
@@ -922,6 +933,7 @@ public class MongoDbIO {
       private final Write spec;
       private transient MongoClient client;
       private List<Document> batch;
+      private Bson filter;
 
       WriteFn(Write spec) {
         this.spec = spec;
@@ -967,7 +979,8 @@ public class MongoDbIO {
         MongoDatabase mongoDatabase = client.getDatabase(spec.database());
         MongoCollection<Document> mongoCollection = mongoDatabase.getCollection(spec.collection());
         try {
-          mongoCollection.insertMany(batch, new InsertManyOptions().ordered(spec.ordered()));
+          mongoCollection.updateMany(spec.filter(), batch, new UpdateOptions().upsert(true));
+          //mongoCollection.insertMany(batch, new InsertManyOptions().ordered(spec.ordered()));
         } catch (MongoBulkWriteException e) {
           if (spec.ordered()) {
             throw e;
